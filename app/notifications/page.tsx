@@ -26,9 +26,7 @@ import {
 } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { playNotificationSound } from '@/lib/actions';
-import { GET } from '../api/location/route';
 import { ipAddress } from '@vercel/functions';
-import IPLocation from '@/components/ip';
 
 interface Notification {
   id: string;
