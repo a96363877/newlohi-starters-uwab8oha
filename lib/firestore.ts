@@ -3,13 +3,13 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyAcnAAlZzpKwN0nwNTzsrz0ka8OleoljJg',
-  authDomain: 'mysms-7b5e8.firebaseapp.com',
-  projectId: 'mysms-7b5e8',
-  storageBucket: 'mysms-7b5e8.firebasestorage.app',
-  messagingSenderId: '1008260512816',
-  appId: '1:1008260512816:web:824a72a0a63c1dc229c1f5',
-  measurementId: 'G-PLK4GEZFSZ',
+    apiKey: "AIzaSyAuUsFLYMm6rv5v0pkBsLCpvgQC8J2RgKE",
+  authDomain: "memerm-e55c9.firebaseapp.com",
+  projectId: "memerm-e55c9",
+  storageBucket: "memerm-e55c9.firebasestorage.app",
+  messagingSenderId: "275777728187",
+  appId: "1:275777728187:web:60f5a8db2cf505eeee439e",
+  measurementId: "G-QTSEBVND7Z"
 };
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
